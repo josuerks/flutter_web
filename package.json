@@ -1,0 +1,11 @@
+{
+  "name": "flutter-web-server",
+  "version": "1.0.0",
+  "main": "render-web-server.js",
+  "scripts": {
+    "start": "node render-web-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
