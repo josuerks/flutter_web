@@ -1,5 +1,5 @@
-services: 
-"  - type: web" 
-"    name: flutter-web" 
-"    env: static" 
-"    staticPublishPath: build/web" 
+services:
+  - type: web
+    name: flutter-web
+    env: static
+    staticPublishPath: build/web
