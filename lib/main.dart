@@ -110,7 +110,6 @@ class _BoutiquePageState extends State<BoutiquePage> {
     );
 
     if (dev != null) {
-      // Sans localisation, adresse vide ou par défaut
       final adresse = {
         'commune': '',
         'quartier': '',
@@ -165,8 +164,7 @@ class _BoutiquePageState extends State<BoutiquePage> {
     super.dispose();
   }
 
-  void _openPage(Widget page) =>
-      Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  void _openPage(Widget page) => Navigator.push(context, MaterialPageRoute(builder: (_) => page));
 
   @override
   Widget build(BuildContext ctx) => Scaffold(
@@ -186,7 +184,12 @@ class _BoutiquePageState extends State<BoutiquePage> {
           margin: EdgeInsets.all(10),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             if (a['image'] != null)
-              Image.network(a['image'], height: 180, width: double.infinity, fit: BoxFit.cover),
+              Image.network(
+                a['image'].toString().replaceFirst('http://', 'https://'),
+                height: 180,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             Padding(
               padding: EdgeInsets.all(8),
               child: Column(children: [
