@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 
 void main() => runApp(BoutiqueApp());
 
@@ -112,12 +110,14 @@ class _BoutiquePageState extends State<BoutiquePage> {
     );
 
     if (dev != null) {
-      final address = await _getPositionAndAddress();
-
-      if (address.containsKey('error')) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(address['error']!)));
-        return;
-      }
+      // Sans localisation, adresse vide ou par défaut
+      final adresse = {
+        'commune': '',
+        'quartier': '',
+        'avenue': '',
+        'latitude': '',
+        'longitude': '',
+      };
 
       final res = await http.post(
         Uri.parse('https://paris-4nys.onrender.com/acheter'),
@@ -126,56 +126,30 @@ class _BoutiquePageState extends State<BoutiquePage> {
           'user': widget.user,
           'article_id': a['id'],
           'devise': dev,
-          'adresse': {
-            'commune': address['commune'],
-            'quartier': address['quartier'],
-            'avenue': address['avenue'],
-            'latitude': address['latitude'],
-            'longitude': address['longitude'],
-          }
+          'adresse': adresse,
         }),
       );
 
-      final d = jsonDecode(res.body);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(d['message'] ?? d['error'] ?? 'Erreur inconnue')),
-      );
-    }
-  }
 
-  Future<Map<String, String>> _getPositionAndAddress() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return {'error': 'Service de localisation désactivé'};
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return {'error': 'Permission de localisation refusée'};
+      if (res.statusCode == 200) {
+        final d = jsonDecode(res.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(d['message'] ?? 'Achat effectué')),
+        );
+      } else {
+        String msg;
+        try {
+          final err = jsonDecode(res.body);
+          msg = err['error'] ?? 'Erreur inconnue';
+        } catch (_) {
+          msg = 'Erreur réseau ou réponse invalide';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ $msg')),
+        );
       }
     }
-
-    if (permission == LocationPermission.deniedForever) {
-      return {'error': 'Permission refusée définitivement. Activer manuellement.'};
-    }
-
-    final pos = await Geolocator.getCurrentPosition();
-    final placemarks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
-    final place = placemarks.first;
-
-    return {
-      'latitude': pos.latitude.toString(),
-      'longitude': pos.longitude.toString(),
-      'commune': place.subAdministrativeArea ?? '',
-      'quartier': place.locality ?? '',
-      'avenue': place.street ?? '',
-    };
   }
 
   @override
